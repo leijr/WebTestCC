@@ -8,6 +8,8 @@ export default function UserManage() {
   const [form, setForm] = useState({ username: "", email: "", role: "employee" });
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [resetResult, setResetResult] = useState(null);
+  const [resetCopied, setResetCopied] = useState(false);
 
   const fetch = () => { getUsers().then(({ data }) => setUsers(data)).catch(() => {}); };
   useEffect(fetch, []);
@@ -38,7 +40,25 @@ export default function UserManage() {
   };
 
   const handleDelete = async (id) => { if (!confirm("确定删除此用户？")) return; try { await deleteUser(id); fetch(); } catch (err) { alert(err.response?.data?.detail || "删除失败"); } };
-  const handleReset = async (id) => { if (!confirm("确定重置此用户的密码？")) return; try { const { data } = await resetPassword(id); alert(`新密码: ${data.password}\n已发送邮件通知用户。`); } catch (err) { alert(err.response?.data?.detail || "重置失败"); } };
+
+  const handleReset = async (id) => {
+    if (!confirm("确定重置此用户的密码？")) return;
+    try {
+      const { data } = await resetPassword(id);
+      setResetResult(data);
+    } catch (err) { alert(err.response?.data?.detail || "重置失败"); }
+  };
+
+  const handleResetCopy = async () => {
+    if (!resetResult) return;
+    try {
+      await navigator.clipboard.writeText(resetResult.password);
+      setResetCopied(true);
+      setTimeout(() => { setResetResult(null); setResetCopied(false); }, 1500);
+    } catch {
+      alert("复制失败，密码: " + resetResult.password);
+    }
+  };
 
   return (
     <div className="adm-page">
@@ -86,6 +106,27 @@ export default function UserManage() {
                 </form>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {resetResult && (
+        <div className="adm-form-overlay" onClick={() => setResetResult(null)}>
+          <div className="adm-form-card" onClick={(e) => e.stopPropagation()}>
+            <div className="adm-success-view">
+              <div className="adm-success-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <h3>密码重置成功</h3>
+              <div className="adm-pwd-box">
+                <span className="adm-pwd-label">新密码</span>
+                <code className="adm-pwd-value">{resetResult.password}</code>
+              </div>
+              <p className="adm-success-hint">新密码已发送邮件通知用户，请提醒用户登录后修改密码</p>
+              <button onClick={handleResetCopy} className="adm-btn-copy">
+                {resetCopied ? "已复制 ✓" : "复制密码并关闭"}
+              </button>
+            </div>
           </div>
         </div>
       )}

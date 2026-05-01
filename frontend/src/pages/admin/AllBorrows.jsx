@@ -67,7 +67,7 @@ export default function AllBorrows() {
                 <td>{new Date(r.borrow_date).toLocaleDateString()}</td>
                 <td>{new Date(r.expected_return_date).toLocaleDateString()}</td>
                 <td>{r.actual_return_date ? new Date(r.actual_return_date).toLocaleDateString() : "-"}</td>
-                <td><StatusBadge status={r.status} /></td><td>{r.return_condition || "-"}</td>
+                <td><StatusBadge status={r.status} /></td><td>{condText(r.return_condition)}</td>
               </tr>
             ))}
           </tbody>
@@ -113,4 +113,9 @@ function StatusBadge({ status }) {
   const m = { borrowed:["借用中","#d97706"], returned:["已归还","#16a34a"], overdue:["已超时","#dc2626"] };
   const [text,color] = m[status]||[status,"#888"];
   return <span style={{ display:"inline-block",padding:"2px 10px",borderRadius:12,background:color+"15",color,fontSize:12,fontWeight:600 }}>{text}</span>;
+}
+
+function condText(c) {
+  const m = { good: "正常", damaged: "损坏", lost: "丢失" };
+  return m[c] || c || "-";
 }

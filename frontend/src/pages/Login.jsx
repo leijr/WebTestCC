@@ -19,6 +19,7 @@ export default function Login() {
       localStorage.setItem("role", data.role);
       localStorage.setItem("username", data.username);
       localStorage.setItem("userId", data.user_id);
+      localStorage.setItem("email", data.email);
       if (data.must_change_password) {
         navigate("/change-password");
       } else {

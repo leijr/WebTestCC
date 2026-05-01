@@ -58,3 +58,15 @@ async def send_overdue_reminder(to: str, username: str, device_name: str, due_da
         f"请尽快归还设备。如有疑问请联系管理员。\n\n"
         f"设备管理系统",
     )
+
+
+async def send_password_changed_email(to: str, username: str):
+    from datetime import datetime
+    await _send_email(
+        to,
+        "设备管理系统 - 密码修改通知",
+        f"您好 {username}：\n\n"
+        f"您的设备管理系统账号密码已于 {datetime.now().strftime('%Y-%m-%d %H:%M')} 修改。\n"
+        f"如非本人操作，请立即联系管理员。\n\n"
+        f"设备管理系统",
+    )

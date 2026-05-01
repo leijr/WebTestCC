@@ -1,16 +1,16 @@
 import secrets
 import string
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
 from schemas import (
-    LoginRequest, LoginResponse, ChangePasswordRequest
+    LoginRequest, LoginResponse, ChangePasswordRequest, ChangeEmailRequest
 )
 from auth import (
     hash_password, verify_password, create_access_token, get_current_user
 )
-from services.email_service import send_welcome_email
+from services.email_service import send_welcome_email, send_password_changed_email
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -31,6 +31,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         access_token=create_access_token(user.id, user.role),
         user_id=user.id,
         username=user.username,
+        email=user.email,
         role=user.role,
         must_change_password=user.must_change_password,
     )
@@ -39,6 +40,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/change-password")
 def change_password(
     req: ChangePasswordRequest,
+    bg: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -47,4 +49,19 @@ def change_password(
     current_user.password_hash = hash_password(req.new_password)
     current_user.must_change_password = False
     db.commit()
+    bg.add_task(send_password_changed_email, current_user.email, current_user.username)
     return {"message": "Password updated"}
+
+
+@router.post("/change-email")
+def change_email(
+    req: ChangeEmailRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    existing = db.query(User).filter(User.email == req.email).first()
+    if existing and existing.id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use")
+    current_user.email = req.email
+    db.commit()
+    return {"message": "Email updated", "email": req.email}

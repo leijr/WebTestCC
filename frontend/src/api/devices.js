@@ -2,6 +2,7 @@ import api from "./client";
 
 export const getDevices = (params) => api.get("/api/devices", { params });
 export const getDevice = (id) => api.get(`/api/devices/${id}`);
+export const getCategories = () => api.get("/api/devices/categories");
 
 export const createDevice = (data) => {
   const fd = new FormData();

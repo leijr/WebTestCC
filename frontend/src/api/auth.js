@@ -5,3 +5,6 @@ export const login = (username, password) =>
 
 export const changePassword = (old_password, new_password) =>
   api.post("/api/auth/change-password", { old_password, new_password });
+
+export const changeEmail = (email) =>
+  api.post("/api/auth/change-email", { email });

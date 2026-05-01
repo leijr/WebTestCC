@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { getDevices, createDevice, updateDevice, deleteDevice } from "../../api/devices";
+import api from "../../api/client";
 
 const API_BASE = "http://localhost:8000";
 
@@ -51,11 +52,23 @@ export default function DeviceManage() {
 
   const handleDelete = async (id) => { if (!confirm("确定删除此设备？")) return; try { await deleteDevice(id); fetch(); } catch (err) { alert(err.response?.data?.detail || "删除失败"); } };
 
+  const handleExport = async () => {
+    try {
+      const { data } = await api.get("/api/devices/export", { responseType: "blob" });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a"); a.href = url; a.download = "devices.xlsx"; a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert("导出失败"); }
+  };
+
   return (
     <div className="adm-page">
       <div className="adm-header">
         <h2>设备管理</h2>
-        <button onClick={openCreate} className="adm-btn">+ 添加设备</button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={handleExport} className="adm-btn-export">导出 Excel</button>
+          <button onClick={openCreate} className="adm-btn">+ 添加设备</button>
+        </div>
       </div>
 
       {showForm && (
@@ -126,6 +139,8 @@ export default function DeviceManage() {
         .adm-header h2 { font-size: 20px; font-weight: 700; color: var(--navy-900); }
         .adm-btn { padding: 8px 18px; background: var(--navy-900); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; transition: all var(--transition); }
         .adm-btn:hover { background: var(--navy-700); transform: translateY(-1px); }
+        .adm-btn-export { padding: 8px 18px; background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; transition: all var(--transition); }
+        .adm-btn-export:hover { background: #15803d; transform: translateY(-1px); }
         .adm-btn-cancel { padding: 8px 18px; background: var(--slate-200); color: var(--slate-700); border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; }
 
         .adm-form-overlay { position: fixed; inset: 0; background: rgba(15,15,35,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -167,7 +182,7 @@ export default function DeviceManage() {
 }
 
 function StatusBadge({ status }) {
-  const m = { available:["可借用","#16a34a"], borrowed:["借用中","#d97706"], retired:["已退役","#888"] };
+  const m = { available:["可借用","#16a34a"], borrowed:["借用中","#d97706"], "损坏":["已损坏","#dc2626"], "丢失":["已丢失","#dc2626"] };
   const [text,color] = m[status]||[status,"#888"];
   return <span style={{ display:"inline-block",padding:"2px 10px",borderRadius:12,background:color+"15",color,fontSize:11,fontWeight:600 }}>{text}</span>;
 }

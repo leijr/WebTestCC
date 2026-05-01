@@ -13,6 +13,7 @@ class LoginResponse(BaseModel):
     token_type: str = "bearer"
     user_id: int
     username: str
+    email: str
     role: str
     must_change_password: bool
 
@@ -20,6 +21,10 @@ class LoginResponse(BaseModel):
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+
+class ChangeEmailRequest(BaseModel):
+    email: str
 
 
 # ── User ──
@@ -85,6 +90,7 @@ class DeviceOut(BaseModel):
     image: str | None = None
     image_url: str | None = None
     status: str
+    borrowed_by: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

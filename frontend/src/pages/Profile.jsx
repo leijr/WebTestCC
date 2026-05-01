@@ -1,19 +1,23 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { changePassword } from "../api/auth";
+import { changePassword, changeEmail } from "../api/auth";
 
 export default function Profile() {
   const username = localStorage.getItem("username");
   const role = localStorage.getItem("role");
   const userId = localStorage.getItem("userId");
-  const navigate = useNavigate();
+  const [currentEmail, setCurrentEmail] = useState(localStorage.getItem("email") || "");
 
   const [showPwdForm, setShowPwdForm] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwdError, setPwdError] = useState("");
-  const [pwdSuccess, setPwdSuccess] = useState(false);
+  const [pwdSuccess, setPwdSuccess] = useState("");
+
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState("");
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -22,15 +26,22 @@ export default function Profile() {
     if (newPassword.length < 6) { setPwdError("新密码至少6位"); return; }
     try {
       await changePassword(oldPassword, newPassword);
-      setPwdSuccess(true);
-      setTimeout(() => {
-        setShowPwdForm(false);
-        setPwdSuccess(false);
-        setOldPassword(""); setNewPassword(""); setConfirmPassword("");
-      }, 1500);
-    } catch (err) {
-      setPwdError(err.response?.data?.detail || "修改失败，请检查原密码");
-    }
+      setPwdSuccess("密码修改成功，已发送邮件通知");
+      setTimeout(() => { setShowPwdForm(false); setPwdSuccess(""); setOldPassword(""); setNewPassword(""); setConfirmPassword(""); }, 2000);
+    } catch (err) { setPwdError(err.response?.data?.detail || "修改失败，请检查原密码"); }
+  };
+
+  const handleChangeEmail = async (e) => {
+    e.preventDefault();
+    setEmailError("");
+    if (!newEmail.includes("@")) { setEmailError("请输入有效的邮箱地址"); return; }
+    try {
+      await changeEmail(newEmail);
+      localStorage.setItem("email", newEmail);
+      setCurrentEmail(newEmail);
+      setEmailSuccess("邮箱修改成功");
+      setTimeout(() => { setShowEmailForm(false); setEmailSuccess(""); setNewEmail(""); }, 2000);
+    } catch (err) { setEmailError(err.response?.data?.detail || "修改失败"); }
   };
 
   return (
@@ -48,31 +59,44 @@ export default function Profile() {
 
       <div className="pf-card" style={{ marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--navy-900)" }}>安全设置</h3>
+          <h3 className="pf-section-title">修改密码</h3>
           {!showPwdForm && (
-            <button onClick={() => setShowPwdForm(true)} className="pf-pwd-btn">修改密码</button>
+            <button onClick={() => setShowPwdForm(true)} className="pf-action-btn">修改</button>
           )}
         </div>
-
         {showPwdForm && (
           <form onSubmit={handleChangePassword} style={{ marginTop: 16 }}>
-            {pwdSuccess && <div className="pf-success">密码修改成功！</div>}
+            {pwdSuccess && <div className="pf-success">{pwdSuccess}</div>}
             {pwdError && <div className="pf-error">{pwdError}</div>}
-            <div className="pf-field">
-              <label>原密码</label>
-              <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="输入原密码" required />
-            </div>
-            <div className="pf-field">
-              <label>新密码</label>
-              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="至少6位" required />
-            </div>
-            <div className="pf-field">
-              <label>确认新密码</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再次输入" required />
-            </div>
+            <div className="pf-field"><label>原密码</label><input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} placeholder="输入原密码" required /></div>
+            <div className="pf-field"><label>新密码</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="至少6位" required /></div>
+            <div className="pf-field"><label>确认新密码</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="再次输入" required /></div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button type="submit" className="pf-pwd-btn" style={{ background: "var(--navy-900)", color: "#fff", border: "none" }}>确认修改</button>
-              <button type="button" onClick={() => setShowPwdForm(false)} className="pf-pwd-btn" style={{ background: "var(--slate-200)", color: "var(--slate-700)", border: "none" }}>取消</button>
+              <button type="submit" className="pf-submit-btn">确认修改</button>
+              <button type="button" onClick={() => setShowPwdForm(false)} className="pf-cancel-btn">取消</button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      <div className="pf-card" style={{ marginTop: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h3 className="pf-section-title">修改邮箱</h3>
+            <p className="pf-current-email">{currentEmail}</p>
+          </div>
+          {!showEmailForm && (
+            <button onClick={() => setShowEmailForm(true)} className="pf-action-btn">修改</button>
+          )}
+        </div>
+        {showEmailForm && (
+          <form onSubmit={handleChangeEmail} style={{ marginTop: 16 }}>
+            {emailSuccess && <div className="pf-success">{emailSuccess}</div>}
+            {emailError && <div className="pf-error">{emailError}</div>}
+            <div className="pf-field"><label>新邮箱地址</label><input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="输入新的邮箱地址" required /></div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="submit" className="pf-submit-btn">确认修改</button>
+              <button type="button" onClick={() => setShowEmailForm(false)} className="pf-cancel-btn">取消</button>
             </div>
           </form>
         )}
@@ -82,7 +106,9 @@ export default function Profile() {
         .pf-page { animation: pfIn 0.4s ease; }
         @keyframes pfIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
         .pf-title { font-size: 20px; font-weight: 700; color: var(--navy-900); margin-bottom: 20px; }
-        .pf-card { background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); }
+        .pf-card { background: #fff; border-radius: var(--radius-md); padding: 28px; box-shadow: var(--shadow-sm); }
+        .pf-section-title { font-size: 15px; font-weight: 600; color: var(--navy-900); }
+        .pf-current-email { font-size: 13px; color: var(--slate-500); margin-top: 2px; }
         .pf-avatar { width: 64px; height: 64px; border-radius: 14px; background: var(--indigo); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; flex-shrink: 0; }
         .pf-info { flex: 1; }
         .pf-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--slate-100); font-size: 14px; }
@@ -91,8 +117,11 @@ export default function Profile() {
         .pf-row strong { color: var(--navy-900); }
         .pf-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; background: rgba(79,70,229,0.1); color: var(--indigo) !important; font-size: 12px; }
         .pf-mono { font-family: var(--font-mono); font-size: 13px; color: var(--slate-500) !important; }
-        .pf-pwd-btn { padding: 8px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; transition: all var(--transition); border: 1px solid var(--slate-200); background: #fff; color: var(--navy-900); }
-        .pf-pwd-btn:hover { border-color: var(--indigo); color: var(--indigo); }
+        .pf-action-btn { padding: 6px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; transition: all var(--transition); border: 1px solid var(--slate-200); background: #fff; color: var(--navy-900); }
+        .pf-action-btn:hover { border-color: var(--indigo); color: var(--indigo); }
+        .pf-submit-btn { padding: 8px 20px; background: var(--navy-900); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; }
+        .pf-submit-btn:hover { background: var(--navy-700); }
+        .pf-cancel-btn { padding: 8px 20px; background: var(--slate-200); color: var(--slate-700); border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; }
         .pf-success { background: #f0fdf4; color: var(--green); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 14px; border-left: 3px solid var(--green); font-size: 13px; }
         .pf-error { background: #fef2f2; color: var(--red); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 14px; border-left: 3px solid var(--red); font-size: 13px; }
         .pf-field { margin-bottom: 14px; }

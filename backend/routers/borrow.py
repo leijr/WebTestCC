@@ -90,7 +90,13 @@ def return_device(
     record.notes = req.notes
 
     device = db.query(Device).filter(Device.id == record.device_id).first()
-    device.status = "available"
+    cond = req.return_condition
+    if cond == "good":
+        device.status = "available"
+    elif cond == "damaged":
+        device.status = "损坏"
+    else:
+        device.status = "丢失"
 
     db.commit()
     db.refresh(record)

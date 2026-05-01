@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDevices } from "../api/devices";
+import { getDevices, getCategories } from "../api/devices";
 import { borrowDevice } from "../api/borrow";
 
 const API_BASE = "http://localhost:8000";
@@ -21,11 +21,15 @@ export default function Devices() {
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
   const [keyword, setKeyword] = useState("");
+  const [categories, setCategories] = useState([]);
   const role = localStorage.getItem("role");
+
+  useEffect(() => { getCategories().then(({ data }) => setCategories(data)).catch(() => {}); }, []);
 
   const [borrowModal, setBorrowModal] = useState(null);
   const [borrowNum, setBorrowNum] = useState(7);
   const [borrowUnit, setBorrowUnit] = useState("天");
+  const [toast, setToast] = useState(null);
 
   const fetch = () => {
     getDevices({ category: category || undefined, status: status || undefined, keyword: keyword || undefined })
@@ -46,15 +50,17 @@ export default function Devices() {
     try {
       await borrowDevice({ device_id: borrowModal.id, expected_return_date: iso });
       setBorrowModal(null);
-      alert("借用成功");
+      setToast({ type: "success", msg: `借用成功！预计 ${formatDate(returnDate)} 归还` });
       fetch();
-    } catch (err) { alert(err.response?.data?.detail || "借用失败"); }
+    } catch (err) { setToast({ type: "error", msg: err.response?.data?.detail || "借用失败" }); }
   };
 
   const returnDate = borrowModal ? calcReturnDate(borrowNum, borrowUnit) : null;
 
   return (
     <div className="dv-page">
+      {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+
       <div className="dv-header">
         <h2>设备列表</h2>
         <span className="dv-count">{devices.length} 台设备</span>
@@ -63,10 +69,11 @@ export default function Devices() {
       <div className="dv-filters">
         <input placeholder="搜索名称 / 序列号" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="dv-filter-input" />
         <select value={category} onChange={(e) => setCategory(e.target.value)} className="dv-filter-select">
-          <option value="">全部分类</option><option value="电脑">电脑</option><option value="总线接口">总线接口</option><option value="网络接口">网络接口</option><option value="其他">其他</option>
+          <option value="">全部分类</option>
+          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="dv-filter-select">
-          <option value="">全部状态</option><option value="available">可借用</option><option value="borrowed">借用中</option><option value="retired">已退役</option>
+          <option value="">全部状态</option><option value="available">可借用</option><option value="borrowed">借用中</option><option value="损坏">已损坏</option><option value="丢失">已丢失</option>
         </select>
       </div>
 
@@ -92,7 +99,12 @@ export default function Devices() {
               {role === "employee" && d.status === "available" && (
                 <button onClick={() => openBorrow(d)} className="dv-card-btn">借用</button>
               )}
-              {d.status !== "available" && <div className="dv-card-disabled">{statusText(d.status)}</div>}
+              {d.status !== "available" && (
+                <div className="dv-card-disabled">
+                  {statusText(d.status)}
+                  {d.borrowed_by && <span className="dv-card-borrower"> · {d.borrowed_by}</span>}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -166,6 +178,7 @@ export default function Devices() {
         .dv-card-btn { width: 100%; padding: 8px; background: var(--navy-900); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; font-family: var(--font-sans); cursor: pointer; transition: all var(--transition); }
         .dv-card-btn:hover { background: var(--navy-700); }
         .dv-card-disabled { width: 100%; padding: 8px; text-align: center; background: var(--slate-100); color: var(--slate-500); border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; }
+        .dv-card-borrower { color: var(--indigo); font-weight: 600; }
         .dv-empty { grid-column: 1/-1; text-align: center; padding: 60px; color: var(--slate-400); font-size: 14px; }
 
         .dv-modal-overlay { position: fixed; inset: 0; background: rgba(15,15,35,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -192,10 +205,34 @@ export default function Devices() {
 }
 
 function statusColor(s) {
-  const m = { available: "#16a34a", borrowed: "#d97706", retired: "#888" };
+  const m = { available: "#16a34a", borrowed: "#d97706", "损坏": "#dc2626", "丢失": "#dc2626" };
   return m[s] || "#888";
 }
 function statusText(s) {
-  const m = { available: "可借用", borrowed: "借用中", retired: "已退役" };
+  const m = { available: "可借用", borrowed: "借用中", "损坏": "已损坏", "丢失": "已丢失" };
   return m[s] || s;
+}
+
+function Toast({ type, msg, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
+  const isSuccess = type === "success";
+  return (
+    <div className={`dv-toast ${isSuccess ? "dv-toast-ok" : "dv-toast-err"}`} onClick={onClose}>
+      <div className="dv-toast-icon">
+        {isSuccess ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        )}
+      </div>
+      <span>{msg}</span>
+      <style>{`
+        .dv-toast { position: fixed; top: 24px; right: 24px; z-index: 999; display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; font-family: var(--font-sans); cursor: pointer; animation: toastIn 0.35s ease; box-shadow: var(--shadow-lg); }
+        @keyframes toastIn { from { opacity:0; transform: translateX(40px); } to { opacity:1; transform: translateX(0); } }
+        .dv-toast-ok { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .dv-toast-err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .dv-toast-icon { flex-shrink: 0; display: flex; }
+      `}</style>
+    </div>
+  );
 }
