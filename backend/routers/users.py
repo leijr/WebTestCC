@@ -2,6 +2,7 @@ import secrets
 import string
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from database import get_db
 from models import User
 from schemas import (
@@ -69,10 +70,14 @@ def update_user(
 ):
     user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
     for key, val in req.model_dump(exclude_unset=True).items():
         setattr(user, key, val)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="用户名已存在，请换一个")
     db.refresh(user)
     return user
 

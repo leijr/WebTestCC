@@ -43,13 +43,9 @@ export default function Login() {
       <div className="login-card-wrapper">
         <div className="login-brand">
           <div className="login-logo">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="var(--indigo)"/>
-              <path d="M8 12h6v8H8zM18 12h6v8h-6zM13 20h6v4h-6z" fill="var(--white)" opacity="0.9"/>
-            </svg>
+            <img src="/zf-logo.png" alt="ZF" className="login-logo-img" />
           </div>
-          <h1>DeviceOS</h1>
-          <p>设备管理系统</p>
+          <h1>DeviceManagement by ZF-EYDFT</h1>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -138,9 +134,10 @@ export default function Login() {
         }
         .login-brand { text-align: center; margin-bottom: 36px; }
         .login-logo { margin-bottom: 16px; display: flex; justify-content: center; }
+        .login-logo-img { width: 56px; height: 56px; border-radius: 14px; object-fit: contain; }
         .login-brand h1 {
           font-family: var(--font-mono);
-          font-size: 22px;
+          font-size: 16px;
           font-weight: 700;
           color: var(--navy-900);
           letter-spacing: -0.5px;

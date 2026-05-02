@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 
 export default function Layout() {
@@ -8,8 +8,6 @@ export default function Layout() {
   const username = localStorage.getItem("username");
   const role = localStorage.getItem("role");
 
-  useEffect(() => { setExpanded(false); }, [location.pathname]);
-
   const logout = () => { localStorage.clear(); navigate("/login"); };
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + "/");
 
@@ -17,22 +15,14 @@ export default function Layout() {
     <div className="layout-root">
       {expanded && <div className="rail-backdrop" onClick={() => setExpanded(false)} />}
 
-      <aside className={`side-rail ${expanded ? "expanded" : ""}`}
-        onMouseEnter={() => setExpanded(true)}
-        onMouseLeave={() => setExpanded(false)}>
+      <aside className={`side-rail ${expanded ? "expanded" : ""}`}>
         <div className="rail-head" onClick={() => setExpanded(!expanded)}>
-          <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
-            <rect width="40" height="40" rx="12" fill="url(#railGrad)"/>
-            <defs><linearGradient id="railGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#7c9a92"/><stop offset="100%" stopColor="#5b8c7a"/></linearGradient></defs>
-            <rect x="9" y="14" width="8" height="12" rx="3" fill="#fff" opacity="0.95"/>
-            <rect x="23" y="14" width="8" height="12" rx="3" fill="#fff" opacity="0.95"/>
-            <rect x="16" y="22" width="8" height="6" rx="3" fill="#fff" opacity="0.8"/>
-          </svg>
-          {expanded && <span className="rail-brand">DMS</span>}
+          <img src="/zf-logo.png" alt="ZF" className="rail-logo-img" />
+          {expanded && <span className="rail-brand">ZF</span>}
         </div>
 
         <nav className="rail-nav">
-          <RailItem to="/" icon={HomeIcon} label="首页" active={isActive("/") && location.pathname === "/"} expanded={expanded} />
+          <RailItem to="/" icon={HomeIcon} label="首页" active={isActive("/") && !isActive("/admin") && !isActive("/devices") && !isActive("/my-borrows") && !isActive("/profile")} expanded={expanded} />
           <RailItem to="/devices" icon={BoxIcon} label="设备列表" active={isActive("/devices")} expanded={expanded} />
           {role !== "admin" && (
             <RailItem to="/my-borrows" icon={BookIcon} label="我的借用" active={isActive("/my-borrows")} expanded={expanded} />
@@ -59,8 +49,13 @@ export default function Layout() {
             )}
           </div>
           <button onClick={logout} className="rail-logout" title="退出登录">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             {expanded && <span>退出</span>}
+          </button>
+          <button onClick={() => setExpanded(!expanded)} className="rail-toggle" title={expanded ? "收起" : "展开"}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              {expanded ? <><polyline points="15 18 9 12 15 6"/></> : <><polyline points="9 18 15 12 9 6"/></>}
+            </svg>
           </button>
         </div>
       </aside>
@@ -70,85 +65,108 @@ export default function Layout() {
       </main>
 
       <style>{`
-        .layout-root { display: flex; min-height: 100vh; background: #f7f4f0; font-family: var(--font-sans); }
+        .layout-root { display: flex; min-height: 100vh; background: #f2f2f7; font-family: var(--font-sans); }
 
         .rail-backdrop {
           display: none;
           position: fixed; inset: 0; z-index: 180;
-          background: rgba(60,50,40,0.15);
+          background: rgba(0,0,0,0.12);
+          backdrop-filter: blur(4px);
         }
         @media (max-width: 640px) {
           .rail-backdrop { display: block; }
         }
 
         .side-rail {
-          position: fixed; top: 0; left: 0; bottom: 0; z-index: 190;
+          position: fixed; top: 12px; left: 12px; bottom: 12px; z-index: 190;
           width: 64px;
-          background: #fff;
+          background: var(--glass-bg);
+          backdrop-filter: var(--glass-blur);
+          -webkit-backdrop-filter: var(--glass-blur);
           display: flex; flex-direction: column;
-          transition: width 0.28s cubic-bezier(0.22, 0.61, 0.36, 1), box-shadow 0.28s;
-          border-right: 1px solid #f0ece8;
+          transition: width var(--transition), box-shadow var(--transition);
+          border: 1px solid var(--glass-border);
+          border-radius: 24px;
           overflow: hidden;
-          box-shadow: 2px 0 12px rgba(0,0,0,0.03);
+          box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(255,255,255,0.6) inset;
         }
         .side-rail.expanded {
           width: 240px;
-          box-shadow: 4px 0 24px rgba(0,0,0,0.08);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(255,255,255,0.6) inset;
         }
 
         .rail-head {
-          display: flex; align-items: center; gap: 10px;
-          padding: 18px 16px; cursor: pointer;
-          border-bottom: 1px solid #f0ece8;
+          display: flex; align-items: center; gap: 12px;
+          padding: 18px 14px; cursor: pointer;
           min-height: 72px;
         }
-        .rail-brand { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: #3d4f47; white-space: nowrap; }
+        .rail-logo-img { width: 36px; height: 36px; border-radius: 9px; object-fit: contain; flex-shrink: 0; }
+        .rail-brand { font-family: var(--font-mono); font-size: 17px; font-weight: 700; color: var(--navy-900); white-space: nowrap; letter-spacing: -0.5px; }
 
-        .rail-nav { flex: 1; padding: 8px; overflow-y: auto; overflow-x: hidden; }
+        .rail-nav { flex: 1; padding: 4px 8px; overflow-y: auto; overflow-x: hidden; }
         .rail-section {
-          padding: 16px 14px 8px; margin-top: 4px;
+          padding: 18px 14px 8px; margin-top: 2px;
           font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-          color: #b8a99a; text-transform: uppercase; white-space: nowrap;
-          height: auto; overflow: hidden;
+          color: var(--slate-500); text-transform: uppercase; white-space: nowrap;
         }
 
-        .rail-footer { padding: 8px; border-top: 1px solid #f0ece8; }
+        .rail-footer { padding: 8px; border-top: 1px solid rgba(0,0,0,0.06); }
         .rail-user { display: flex; align-items: center; gap: 10px; padding: 6px; margin-bottom: 4px; }
         .rail-avatar {
-          width: 34px; height: 34px; min-width: 34px; border-radius: 10px;
-          background: linear-gradient(135deg, #e8987b, #f0b8a0);
+          width: 34px; height: 34px; min-width: 34px; border-radius: 11px;
+          background: linear-gradient(135deg, #007aff, #5856d6);
           color: #fff; display: flex; align-items: center; justify-content: center;
-          font-size: 14px; font-weight: 700;
+          font-size: 14px; font-weight: 700; letter-spacing: 0;
         }
         .rail-user-info { white-space: nowrap; overflow: hidden; }
-        .rail-username { font-size: 13px; font-weight: 600; color: #3d4f47; }
-        .rail-role { font-size: 11px; color: #b8a99a; }
+        .rail-username { font-size: 13px; font-weight: 600; color: var(--navy-900); }
+        .rail-role { font-size: 11px; color: var(--slate-500); }
         .rail-logout {
           width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 8px; background: #f7f4f0; border: none; border-radius: 10px;
-          color: #8c7b6e; font-size: 12px; font-weight: 500; font-family: var(--font-sans);
+          padding: 8px; background: rgba(0,0,0,0.03); border: none; border-radius: 12px;
+          color: var(--slate-500); font-size: 12px; font-weight: 500; font-family: var(--font-sans);
           cursor: pointer; transition: all 0.2s;
         }
-        .rail-logout:hover { background: #f0e8e0; color: #5c4a3a; }
+        .rail-logout:hover { background: rgba(255,59,48,0.08); color: var(--red); }
+
+        .rail-toggle {
+          width: 100%; display: flex; align-items: center; justify-content: center;
+          padding: 6px; margin-top: 4px;
+          background: transparent; border: none; border-radius: 10px;
+          color: var(--slate-500); cursor: pointer;
+          transition: all 0.2s;
+        }
+        .rail-toggle:hover { background: rgba(0,0,0,0.05); color: var(--navy-900); }
 
         .rail-item {
           display: flex; align-items: center; gap: 12px;
-          padding: 10px 14px; margin-bottom: 2px; border-radius: 10px;
-          color: #6b5e52; text-decoration: none;
+          padding: 10px 14px; margin-bottom: 2px; border-radius: 12px;
+          color: var(--slate-500); text-decoration: none;
           font-size: 14px; font-weight: 500; white-space: nowrap;
           transition: all 0.18s; min-height: 44px;
         }
-        .rail-item:hover { background: #f5f1ec; color: #3d4f47; }
-        .rail-item.active { background: #eef5f2; color: #4a7c6b; font-weight: 600; }
+        .rail-item:hover { background: rgba(0,0,0,0.04); color: var(--navy-900); }
+        .rail-item.active { background: rgba(0,122,255,0.1); color: var(--blue); font-weight: 600; }
         .rail-item svg { flex-shrink: 0; }
 
-        .main-area { flex: 1; padding: 28px; margin-left: 64px; min-height: 100vh; transition: margin-left 0.28s cubic-bezier(0.22, 0.61, 0.36, 1); }
-        .side-rail.expanded ~ .main-area { margin-left: 240px; }
+        .main-area {
+          flex: 1; margin: 12px 12px 12px 88px;
+          padding: 28px; min-height: calc(100vh - 24px);
+          background: rgba(255,255,255,0.55);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(255,255,255,0.4);
+          border-radius: 24px;
+          transition: margin-left var(--transition);
+        }
+        .side-rail.expanded ~ .main-area { margin-left: 264px; }
 
         @media (max-width: 640px) {
-          .side-rail:not(.expanded) { width: 0; }
-          .main-area { margin-left: 0; padding: 16px; }
-          .side-rail.expanded ~ .main-area { margin-left: 240px; }
+          .side-rail { top: 8px; left: 8px; bottom: 8px; border-radius: 20px; }
+          .side-rail:not(.expanded) { width: 0; border: none; box-shadow: none; }
+          .main-area { margin: 8px; border-radius: 20px; padding: 16px; }
+          .side-rail:not(.expanded) ~ .main-area { margin-left: 8px; }
+          .side-rail.expanded ~ .main-area { margin-left: 8px; }
         }
       `}</style>
     </div>

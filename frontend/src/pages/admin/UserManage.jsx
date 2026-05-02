@@ -10,21 +10,22 @@ export default function UserManage() {
   const [copied, setCopied] = useState(false);
   const [resetResult, setResetResult] = useState(null);
   const [resetCopied, setResetCopied] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const fetch = () => { getUsers().then(({ data }) => setUsers(data)).catch(() => {}); };
   useEffect(fetch, []);
 
-  const openCreate = () => { setEditId(null); setForm({ username: "", email: "", role: "employee" }); setResult(null); setCopied(false); setShowForm(true); };
-  const openEdit = (u) => { setEditId(u.id); setForm({ username: u.username, email: u.email, role: u.role }); setResult(null); setCopied(false); setShowForm(true); };
+  const openCreate = () => { setEditId(null); setForm({ username: "", email: "", role: "employee" }); setResult(null); setCopied(false); setFormError(""); setShowForm(true); };
+  const openEdit = (u) => { setEditId(u.id); setForm({ username: u.username, email: u.email, role: u.role }); setResult(null); setCopied(false); setFormError(""); setShowForm(true); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (editId) {
       try { await updateUser(editId, form); setShowForm(false); fetch(); }
-      catch (err) { alert(err.response?.data?.detail || "保存失败"); }
+      catch (err) { setFormError(err.response?.data?.detail || "保存失败"); }
     } else {
       try { const { data } = await createUser(form); setResult(data); fetch(); }
-      catch (err) { alert(err.response?.data?.detail || "保存失败"); }
+      catch (err) { setFormError(err.response?.data?.detail || "保存失败"); }
     }
   };
 
@@ -39,14 +40,14 @@ export default function UserManage() {
     }
   };
 
-  const handleDelete = async (id) => { if (!confirm("确定删除此用户？")) return; try { await deleteUser(id); fetch(); } catch (err) { alert(err.response?.data?.detail || "删除失败"); } };
+  const handleDelete = async (id) => { if (!confirm("确定删除此用户？")) return; try { await deleteUser(id); fetch(); } catch (err) { setFormError(err.response?.data?.detail || "删除失败"); } };
 
   const handleReset = async (id) => {
     if (!confirm("确定重置此用户的密码？")) return;
     try {
       const { data } = await resetPassword(id);
       setResetResult(data);
-    } catch (err) { alert(err.response?.data?.detail || "重置失败"); }
+    } catch (err) { setFormError(err.response?.data?.detail || "重置失败"); }
   };
 
   const handleResetCopy = async () => {
@@ -88,6 +89,7 @@ export default function UserManage() {
             ) : (
               <>
                 <h3>{editId ? "编辑用户" : "添加用户"}</h3>
+                {formError && <div className="adm-form-error">{formError}</div>}
                 <form onSubmit={handleSubmit}>
                   <div className="adm-field"><label>用户名 *</label><input value={form.username} onChange={(e) => setForm({...form,username:e.target.value})} required /></div>
                   <div className="adm-field"><label>邮箱 *</label><input type="email" value={form.email} onChange={(e) => setForm({...form,email:e.target.value})} required /></div>
@@ -166,6 +168,7 @@ export default function UserManage() {
         .adm-form-overlay { position: fixed; inset: 0; background: rgba(15,15,35,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .adm-form-card { background: #fff; border-radius: var(--radius-md); padding: 28px; width: 440px; box-shadow: var(--shadow-lg); }
         .adm-form-card h3 { font-size: 18px; font-weight: 700; color: var(--navy-900); margin-bottom: 20px; }
+        .adm-form-error { background: #fef2f2; color: var(--red); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; border-left: 3px solid var(--red); font-size: 13px; }
         .adm-field { margin-bottom: 14px; }
         .adm-field label { display: block; font-size: 12px; font-weight: 600; color: var(--slate-700); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
         .adm-field input, .adm-select { width: 100%; padding: 9px 12px; border: 1.5px solid var(--slate-200); border-radius: var(--radius-sm); font-size: 14px; font-family: var(--font-sans); outline: none; transition: border-color var(--transition); }
