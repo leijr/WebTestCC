@@ -1,29 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --navy-900: #0f0f23;
-  --navy-800: #1a1a2e;
-  --navy-700: #16213e;
-  --navy-600: #1d2d50;
-  --slate-100: #f4f5f7;
-  --slate-200: #e8ecf1;
-  --slate-300: #c8cdd5;
-  --slate-500: #6b7280;
-  --slate-700: #374151;
+  --navy-900: #3d4f47;
+  --navy-800: #5a6f66;
+  --navy-700: #4a7c6b;
+  --navy-600: #6b8f80;
+  --slate-100: #f7f4f0;
+  --slate-200: #ede8e2;
+  --slate-300: #d4ccc2;
+  --slate-500: #8c7b6e;
+  --slate-700: #5c4a3a;
   --white: #ffffff;
-  --green: #16a34a;
-  --amber: #d97706;
-  --red: #dc2626;
-  --blue: #2563eb;
-  --indigo: #4f46e5;
+  --green: #6b9e7a;
+  --amber: #c98a4b;
+  --red: #d4856b;
+  --blue: #5b8fa8;
+  --indigo: #7c9a92;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 3px rgba(60, 50, 40, 0.05);
+  --shadow-md: 0 4px 16px rgba(60, 50, 40, 0.07);
+  --shadow-lg: 0 8px 32px rgba(60, 50, 40, 0.10);
   --transition: 200ms ease;
 }
 
